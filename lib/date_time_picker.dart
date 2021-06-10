@@ -7,6 +7,7 @@ library date_time_picker;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_rounded_date_picker/flutter_rounded_date_picker.dart';
 
 enum DateTimePickerType { date, time, dateTime, dateTimeSeparate }
 
@@ -160,6 +161,7 @@ class DateTimePicker extends FormField<String> {
     this.selectableDayPredicate,
     this.textDirection,
     this.locale,
+    this.dialogLocale,
     this.useRootNavigator = false,
     this.routeSettings,
     this.use24HourFormat = true,
@@ -468,8 +470,12 @@ class DateTimePicker extends FormField<String> {
   final TextDirection? textDirection;
 
   /// An optional [locale] argument can be used to set the locale for the date
-  /// picker. It defaults to the ambient locale provided by [Localizations].
+  /// and time labels. It defaults to the ambient locale provided by [Localizations].
   final Locale? locale;
+
+  /// An optional [locale] argument can be used to set the locale for the date and time
+  /// picker dialog. It defaults to the ambient locale provided by [Localizations].
+  final Locale? dialogLocale;
 
   /// The [context], [useRootNavigator] and [routeSettings] arguments are passed to
   /// [showDialog], the documentation for which discusses how it is used. [context]
@@ -623,17 +629,17 @@ class _DateTimePickerState extends FormFieldState<String> {
 
           _sDate = DateFormat('yyyy-MM-dd', languageCode).format(_dDate);
 
-          if (lsOldTime != '') {
+          //if (lsOldTime != '') {
             _tTime = TimeOfDay.fromDateTime(_dDate);
             _sTime = DateFormat('HH:mm', languageCode).format(_dDate);
 
             if (!widget.use24HourFormat) {
               _sTime = DateFormat('hh:mm a', languageCode).format(_dDate);
             }
-          }
+          //}
 
-          _dateLabelController.text = lsOldDate != '' ? _sDate : '';
-          _timeLabelController.text = lsOldTime != '' ? _sTime : '';
+          _dateLabelController.text = _sDate;
+          _timeLabelController.text = _sTime;
 
           if (widget.dateMask != null && widget.dateMask != '') {
             _dateLabelController.text =
@@ -659,7 +665,13 @@ class _DateTimePickerState extends FormFieldState<String> {
           _sTime = lsValue;
           _timeLabelController.text = _sTime + _sPeriod;
         }
+      }else{
+        _dateLabelController.clear();
+        _timeLabelController.clear();
       }
+    }else{
+      _dateLabelController.clear();
+      _timeLabelController.clear();
     }
   }
 
@@ -708,7 +720,7 @@ class _DateTimePickerState extends FormFieldState<String> {
       errorFormatText: widget.errorFormatText,
       errorInvalidText: widget.errorInvalidText,
       //textDirection: widget.textDirection,
-      locale: widget.locale,
+      locale: widget.dialogLocale,
       useRootNavigator: widget.useRootNavigator,
       routeSettings: widget.routeSettings,
     );
@@ -744,22 +756,39 @@ class _DateTimePickerState extends FormFieldState<String> {
   }
 
   Future<void> _showTimePickerDialog() async {
-    final ltTimePicked = await showTimePicker(
-      context: context,
-      initialTime: _tTime,
-      useRootNavigator: widget.useRootNavigator,
-      routeSettings: widget.routeSettings,
-      builder: (BuildContext context, Widget? child) {
-        return MediaQuery(
-          data: MediaQuery.of(context)
-              .copyWith(alwaysUse24HourFormat: widget.use24HourFormat),
-          child: child ?? const SizedBox(),
-        );
-      },
-    );
+    final ltTimePicked = widget.use24HourFormat?
+      await showRoundedTimePicker(
+        context: context,
+        initialTime: _tTime,
+        locale: widget.dialogLocale,
+      ):
+      await showTimePicker(
+        context: context,
+        initialTime: _tTime,
+        useRootNavigator: widget.useRootNavigator,
+        routeSettings: widget.routeSettings,
+        builder: (BuildContext context, Widget? child) {
+          return Localizations.override(
+            context: context,
+            locale: Locale('en','US'),
+            child: child?? const SizedBox(),
+          );
+          /*return MediaQuery(
+            data: MediaQuery.of(context)
+                .copyWith(alwaysUse24HourFormat: widget.use24HourFormat),
+            child: child ?? const SizedBox(),
+          );*/
+        },
+      );
 
+    print(ltTimePicked);
     if (ltTimePicked != null) {
-      var lsHour = ltTimePicked.hour.toString().padLeft(2, '0');
+      var hour=ltTimePicked.hour;
+      var lsHour = hour.toString().padLeft(2, '0');
+      var lsTextHour=lsHour;
+      if (!widget.use24HourFormat) {
+        lsTextHour = (hour>12?hour-12:hour).toString().padLeft(2, '0');
+      }
       final lsMinute = ltTimePicked.minute.toString().padLeft(2, '0');
 
       if (ltTimePicked.period.index == 0 && lsHour == '12') {
@@ -773,7 +802,7 @@ class _DateTimePickerState extends FormFieldState<String> {
       _sTime = '$lsHour:$lsMinute';
       _tTime = ltTimePicked;
 
-      _timeLabelController.text = _sTime;
+      _timeLabelController.text = '$lsTextHour:$lsMinute$_sPeriod';
       final lsOldValue = _sValue;
       _sValue = _sTime;
 
@@ -809,7 +838,7 @@ class _DateTimePickerState extends FormFieldState<String> {
       errorFormatText: widget.errorFormatText,
       errorInvalidText: widget.errorInvalidText,
       //textDirection: widget.textDirection,
-      locale: widget.locale,
+      locale: widget.dialogLocale,
       useRootNavigator: widget.useRootNavigator,
       routeSettings: widget.routeSettings,
     );

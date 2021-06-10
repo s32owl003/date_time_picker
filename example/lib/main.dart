@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
         GlobalMaterialLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: [Locale('pt', 'BR')],
+      supportedLocales: [Locale('en', 'US'),Locale('es', ''),Locale('zh','TW'),Locale('zh','US')],
     );
   }
 }
@@ -52,9 +52,9 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    Intl.defaultLocale = 'pt_BR';
+    Intl.defaultLocale = 'en_US';
     //_initialValue = DateTime.now().toString();
-    _controller1 = TextEditingController(text: DateTime.now().toString());
+    _controller1 = TextEditingController();
     _controller2 = TextEditingController(text: DateTime.now().toString());
     _controller3 = TextEditingController(text: DateTime.now().toString());
 
@@ -71,7 +71,7 @@ class _MyHomePageState extends State<MyHomePage> {
     await Future.delayed(const Duration(seconds: 3), () {
       setState(() {
         //_initialValue = '2000-10-22 14:30';
-        _controller1.text = '2000-09-20 14:30';
+        //_controller1.text = '2000-09-20 14:30';
         _controller2.text = '2001-10-21 15:31';
         _controller3.text = '2002-11-22';
         _controller4.text = '17:01';
@@ -91,6 +91,35 @@ class _MyHomePageState extends State<MyHomePage> {
           key: _oFormKey,
           child: Column(
             children: <Widget>[
+              Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Expanded(child:
+                DateTimePicker(
+                  type: DateTimePickerType.dateTimeSeparate,
+                  dateMask: 'yyyy-MM-dd',
+                  controller: _controller1,
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime(2100),
+                  icon: Icon(Icons.event),
+                  dateLabelText: '日期',
+                  timeLabelText: "時間",
+                  timeFieldWidth: 130,
+                  //locale: Locale('zh','TW'),
+                  dialogLocale: Locale('zh','TW'),
+                  use24HourFormat: true,
+                  validator: (val) {
+                    print(val);
+                    return null;
+                  },
+                )),
+                IconButton(
+                    onPressed: (){
+                      print(_controller1.text);
+                    },
+                    icon: Icon(Icons.location_on)
+                ),
+              ]),
               DateTimePicker(
                 type: DateTimePickerType.dateTimeSeparate,
                 dateMask: 'd MMM, yyyy',
@@ -101,8 +130,9 @@ class _MyHomePageState extends State<MyHomePage> {
                 icon: Icon(Icons.event),
                 dateLabelText: 'Date',
                 timeLabelText: "Hour",
-                //use24HourFormat: false,
-                //locale: Locale('pt', 'BR'),
+                use24HourFormat: false,
+                //locale: Locale('zh','TW'),
+                dialogLocale: Locale('zh', 'TW'),
                 selectableDayPredicate: (date) {
                   if (date.weekday == 6 || date.weekday == 7) {
                     return false;
@@ -179,11 +209,15 @@ class _MyHomePageState extends State<MyHomePage> {
               SizedBox(height: 10),
               ElevatedButton(
                 onPressed: () {
-                  final loForm = _oFormKey.currentState;
+                  setState(() {
+                    _controller1.text = _controller1.text==""?DateTime.now().toString():"";
+                  });
+
+                  /*final loForm = _oFormKey.currentState;
 
                   if (loForm?.validate() == true) {
                     loForm?.save();
-                  }
+                  }*/
                 },
                 child: Text('Submit'),
               ),
